@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Os Meus Treinos 💪</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1e293b;--accent:#f97316;--accent2:#fff7ed;
+  --bg:#f1f5f9;--card:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;--danger:#ef4444;
+  --r:12px;--sh:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shm:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:var(--primary);color:#fff;padding:16px 20px 0;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.header-left{display:flex;align-items:center;gap:10px}
+.header h1{font-size:1.2rem;font-weight:700;letter-spacing:-.02em}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-dot.green{background:#22c55e}.status-dot.red{background:#ef4444}.status-dot.gray{background:#94a3b8}
+.header-actions{display:flex;gap:8px;align-items:center}
+.hbtn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:8px;font-size:.8rem;cursor:pointer;transition:background .2s}
+.hbtn:hover{background:rgba(255,255,255,.28)}
+.tabs{display:flex;gap:4px}
+.tab{padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;font-size:.85rem;font-weight:500;color:rgba(255,255,255,.6);border:none;background:none;transition:all .2s}
+.tab:hover{color:rgba(255,255,255,.9)}
+.tab.active{background:var(--bg);color:var(--primary);font-weight:700}
+.content{padding:20px;max-width:960px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;transition:transform .2s,box-shadow .2s;overflow:hidden}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shm)}
+.card-thumb{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:2.8rem;background:#f8fafc}
+.card-body{padding:12px}
+.card-name{font-weight:600;font-size:.95rem;margin-bottom:4px}
+.card-tag{display:inline-block;background:var(--accent2);color:var(--accent);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:4px}
+.card-add{background:var(--card);border-radius:var(--r);border:2px dashed var(--border);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;min-height:120px;flex-direction:column;gap:8px;color:var(--muted);font-size:.85rem}
+.card-add:hover{border-color:var(--accent);color:var(--accent)}
+.tr-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;transition:transform .2s,box-shadow .2s;overflow:hidden;border-left:4px solid var(--accent);margin-bottom:12px}
+.tr-card:hover{transform:translateY(-2px);box-shadow:var(--shm)}
+.tr-card-hdr{padding:16px;display:flex;align-items:center;gap:12px}
+.tr-emoji{font-size:2rem;line-height:1}
+.tr-info{flex:1}
+.tr-name{font-weight:700;font-size:1rem}
+.tr-count{font-size:.8rem;color:var(--muted);margin-top:2px}
+.tr-color-0{border-left-color:#f97316}.tr-color-1{border-left-color:#3b82f6}
+.tr-color-2{border-left-color:#22c55e}.tr-color-3{border-left-color:#a855f7}
+.tr-color-4{border-left-color:#ef4444}.tr-color-5{border-left-color:#eab308}
+.tr-color-6{border-left-color:#14b8a6}.tr-color-7{border-left-color:#f43f5e}
+.note-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;padding:16px;transition:transform .2s,box-shadow .2s}
+.note-card:hover{transform:translateY(-2px);box-shadow:var(--shm)}
+.note-title{font-weight:600;margin-bottom:6px}
+.note-preview{font-size:.85rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note-date{font-size:.75rem;color:var(--muted);margin-top:8px}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+.search-input{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:var(--card);outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--accent)}
+.filter-sel{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card);cursor:pointer;outline:none}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pill-btn{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:all .2s}
+.pill-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pill-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn{padding:8px 16px;border-radius:8px;font-size:.9rem;font-weight:500;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:#ea6c05}
+.btn-s{background:var(--bg);color:var(--text);border:1px solid var(--border)}.btn-s:hover{background:var(--border)}
+.btn-d{background:#fef2f2;color:var(--danger);border:1px solid #fee2e2}.btn-d:hover{background:#fee2e2}
+.btn-sm{padding:5px 10px;font-size:.8rem}
+.btn-ico{padding:6px 8px;background:var(--bg);border:1px solid var(--border)}
+.detail-view{display:none}.detail-view.active{display:block}
+.detail-hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.detail-back{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.detail-title-block{flex:1;min-width:0}
+.detail-title{font-size:1.35rem;font-weight:700;word-break:break-word}
+.detail-sub{color:var(--muted);font-size:.9rem;margin-top:4px}
+.detail-acts{display:flex;gap:8px;flex-shrink:0}
+.sv-box{background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.sv-box-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.sv-box-content{font-size:.9rem;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.sv-box-content a,.note-content a{color:var(--accent);text-decoration:none}
+.sv-box-content a:hover,.note-content a:hover{text-decoration:underline}
+.ex-item{background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:8px}
+.ex-item-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ex-item-name{font-weight:600;font-size:.92rem}
+.ex-stats{display:flex;gap:16px;flex-wrap:wrap}
+.ex-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:44px}
+.ex-stat-val{font-weight:700;font-size:1rem;color:var(--text)}
+.ex-stat-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.ex-notes{font-size:.8rem;color:var(--muted);margin-top:6px;font-style:italic}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:500}
+.pill-o{background:#fff7ed;color:#ea580c}
+.ex-picker{border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;background:#fff}
+.ex-picker-item{padding:8px 12px;cursor:pointer;font-size:.88rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);transition:background .15s}
+.ex-picker-item:last-child{border-bottom:none}
+.ex-picker-item:hover{background:var(--accent2)}
+.ex-picker-tag{font-size:.73rem;color:var(--muted)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-hdr{padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10;border-bottom:1px solid var(--border)}
+.modal-title{font-size:1.05rem;font-weight:700}
+.modal-close{background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:20px}
+.modal-ftr{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.fc{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit;outline:none;transition:border-color .2s;background:#fff}
+.fc:focus{border-color:var(--accent)}
+textarea.fc{resize:vertical;min-height:80px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.photo-up{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.85rem}
+.photo-up:hover{border-color:var(--accent);color:var(--accent)}
+.photo-prev{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:8px}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:#fff;border-radius:12px;padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.confirm-box h3{margin-bottom:8px}
+.confirm-box p{color:var(--muted);font-size:.88rem;margin-bottom:20px}
+.confirm-acts{display:flex;gap:8px;justify-content:center}
+.empty{text-align:center;padding:56px 20px;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+.empty-title{font-size:1.05rem;font-weight:600;margin-bottom:6px;color:var(--text)}
+.empty-text{font-size:.88rem}
+.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 14px rgba(249,115,22,.45);transition:all .2s;display:flex;align-items:center;justify-content:center;z-index:100}
+.fab:hover{transform:scale(1.1)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}
+  .fr2,.fr3{grid-template-columns:1fr 1fr}
+  .content{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <span class="status-dot gray" id="statusDot" title="Estado da ligação"></span>
+      <h1>💪 Os Meus Treinos</h1>
+    </div>
+    <div class="header-actions">
+      <button class="hbtn" onclick="exportJSON()">⬇ Export</button>
+      <button class="hbtn" onclick="document.getElementById('importInput').click()">⬆ Import</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="hbtn" onclick="openSettings()">⚙️</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="exercicios" onclick="showTab('exercicios')">🏋️ Exercícios</button>
+    <button class="tab" data-tab="treinos" onclick="showTab('treinos')">📋 Treinos</button>
+    <button class="tab" data-tab="notas" onclick="showTab('notas')">📓 Notas</button>
+  </div>
+</div>
+
+<!-- EXERCÍCIOS -->
+<div id="page-exercicios" class="page active">
+  <div class="content">
+    <div id="ex-list">
+      <div class="search-row">
+        <input class="search-input" id="exSearch" placeholder="🔍 Pesquisar..." oninput="renderExercicios()">
+        <select class="filter-sel" id="exGroupSel" onchange="setExFilter(this.value)"></select>
+      </div>
+      <div class="pills" id="exPills"></div>
+      <div class="grid" id="exGrid"></div>
+    </div>
+    <div id="ex-detail" class="detail-view">
+      <div class="detail-hdr">
+        <button class="detail-back" onclick="backToExList()">← Voltar</button>
+        <div class="detail-title-block">
+          <div class="detail-title" id="ex-d-name"></div>
+          <div class="detail-sub" id="ex-d-group"></div>
+        </div>
+        <div class="detail-acts">
+          <button class="btn btn-s btn-sm" onclick="openExModal(currentEx)">✏️ Editar</button>
+          <button class="btn btn-d btn-sm" onclick="confirmDeleteEx()">🗑</button>
+        </div>
+      </div>
+      <div id="ex-d-photo"></div>
+      <div id="ex-d-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TREINOS -->
+<div id="page-treinos" class="page">
+  <div class="content">
+    <div id="tr-list"><div id="trGrid"></div></div>
+    <div id="tr-detail" class="detail-view">
+      <div class="detail-hdr">
+        <button class="detail-back" onclick="backToTrList()">← Voltar</button>
+        <div class="detail-title-block">
+          <div class="detail-title" id="tr-d-name"></div>
+          <div class="detail-sub" id="tr-d-count"></div>
+        </div>
+        <div class="detail-acts">
+          <button class="btn btn-s btn-sm" onclick="openTrModal(currentTr)">✏️ Editar</button>
+          <button class="btn btn-d btn-sm" onclick="confirmDeleteTr()">🗑</button>
+        </div>
+      </div>
+      <div id="tr-d-content"></div>
+      <button class="btn btn-p" style="margin-top:4px" onclick="openTrExModal()">+ Adicionar Exercício</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTAS -->
+<div id="page-notas" class="page">
+  <div class="content">
+    <div id="notas-list"><div class="notes-grid" id="notasGrid"></div></div>
+    <div id="notas-detail" class="detail-view">
+      <div class="detail-hdr">
+        <button class="detail-back" onclick="backToNotasList()">← Voltar</button>
+        <div class="detail-title-block">
+          <div class="detail-title" id="nota-d-title"></div>
+          <div class="detail-sub" id="nota-d-date"></div>
+        </div>
+        <div class="detail-acts">
+          <button class="btn btn-s btn-sm" onclick="openNotaModal(currentNota)">✏️ Editar</button>
+          <button class="btn btn-d btn-sm" onclick="confirmDeleteNota()">🗑</button>
+        </div>
+      </div>
+      <div id="nota-d-content"></div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="fabAction()">＋</button>
+
+<!-- MODAL: Exercício -->
+<div class="overlay" id="exModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="exModalTitle">Novo Exercício</div>
+      <button class="modal-close" onclick="closeExModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Nome</label><input class="fc" id="exName" placeholder="ex: Supino Plano"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Grupo Muscular</label><input class="fc" id="exGroup" placeholder="ex: Peito" list="groupsDL"><datalist id="groupsDL"></datalist></div>
+        <div class="fg"><label class="fl">Emoji</label><input class="fc" id="exEmoji" placeholder="💪" maxlength="4"></div>
+      </div>
+      <div class="fg"><label class="fl">Descrição / Técnica</label><textarea class="fc" id="exDesc" placeholder="Como executar correctamente..."></textarea></div>
+      <div class="fg"><label class="fl">Link de Vídeo</label><input class="fc" id="exVideo" placeholder="https://youtube.com/..."></div>
+      <div class="fg"><label class="fl">Notas adicionais</label><textarea class="fc" id="exNotes" placeholder="Dicas, variações, carga..." style="min-height:60px"></textarea></div>
+      <div class="fg">
+        <label class="fl">Foto</label>
+        <div class="photo-up" onclick="document.getElementById('exPhotoInput').click()">
+          <img id="exPhotoPrev" class="photo-prev" style="display:none">
+          <div id="exPhotoTxt">📷 Clica para adicionar foto</div>
+        </div>
+        <input type="file" id="exPhotoInput" accept="image/*" style="display:none" onchange="handleExPhoto(event)">
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-d btn-sm" id="exDelBtn" style="margin-right:auto;display:none" onclick="confirmDeleteEx()">🗑 Apagar</button>
+      <button class="btn btn-s" onclick="closeExModal()">Cancelar</button>
+      <button class="btn btn-p" id="exSaveBtn" onclick="saveEx()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Treino -->
+<div class="overlay" id="trModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="trModalTitle">Novo Treino</div>
+      <button class="modal-close" onclick="closeTrModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fr2">
+        <div class="fg"><label class="fl">Nome do Treino</label><input class="fc" id="trName" placeholder="ex: Treino A"></div>
+        <div class="fg"><label class="fl">Emoji</label><input class="fc" id="trEmoji" placeholder="💪" maxlength="4"></div>
+      </div>
+      <div class="fg"><label class="fl">Notas do Treino</label><textarea class="fc" id="trNotes" placeholder="Objectivos, contexto, dia de treino..."></textarea></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-d btn-sm" id="trDelBtn" style="margin-right:auto;display:none" onclick="confirmDeleteTr()">🗑 Apagar</button>
+      <button class="btn btn-s" onclick="closeTrModal()">Cancelar</button>
+      <button class="btn btn-p" id="trSaveBtn" onclick="saveTreino()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Exercício no Treino -->
+<div class="overlay" id="trExModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="trExModalTitle">Adicionar Exercício</div>
+      <button class="modal-close" onclick="closeTrExModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="fl">Exercício</label>
+        <input class="fc" id="trExSearch" placeholder="Pesquisar na biblioteca ou escrever nome..." oninput="filterExPicker()">
+        <div class="ex-picker" id="exPickerList" style="margin-top:4px"></div>
+        <input type="hidden" id="trExLibId">
+        <input type="hidden" id="trExItemId">
+      </div>
+      <div class="fr3">
+        <div class="fg"><label class="fl">Séries</label><input class="fc" id="trExSets" type="number" min="1" placeholder="4"></div>
+        <div class="fg"><label class="fl">Repetições</label><input class="fc" id="trExReps" placeholder="8–12"></div>
+        <div class="fg"><label class="fl">Descanso</label><input class="fc" id="trExRest" placeholder="90s"></div>
+      </div>
+      <div class="fg"><label class="fl">Notas</label><textarea class="fc" id="trExNotes" placeholder="Carga, técnica, progressão..."></textarea></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-s" onclick="closeTrExModal()">Cancelar</button>
+      <button class="btn btn-p" id="trExSaveBtn" onclick="saveTrEx()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nota -->
+<div class="overlay" id="notaModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="notaModalTitle">Nova Nota</div>
+      <button class="modal-close" onclick="closeNotaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Título</label><input class="fc" id="notaTitle" placeholder="ex: Progressão no Supino"></div>
+      <div class="fg">
+        <label class="fl">Conteúdo (texto, links, apontamentos)</label>
+        <textarea class="fc" id="notaContent" style="min-height:160px" placeholder="Escreve aqui... URLs tornam-se links clicáveis automaticamente."></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Exercícios relacionados</label>
+        <div id="notaExTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+        <select class="fc" id="notaExSel" onchange="addNotaEx(this)">
+          <option value="">+ Associar exercício...</option>
+        </select>
+        <input type="hidden" id="notaExIds" value="[]">
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-d btn-sm" id="notaDelBtn" style="margin-right:auto;display:none" onclick="confirmDeleteNota()">🗑 Apagar</button>
+      <button class="btn btn-s" onclick="closeNotaModal()">Cancelar</button>
+      <button class="btn btn-p" id="notaSaveBtn" onclick="saveNota()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Definições -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">⚙️ Definições</div>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="fl">URL da API</label>
+        <input class="fc" id="cfgUrl" placeholder="https://treinos-api-xxx.run.app">
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">URL do serviço Cloud Run</div>
+      </div>
+      <div class="fg">
+        <label class="fl">API Key (opcional)</label>
+        <input class="fc" id="cfgKey" type="password" placeholder="a tua chave secreta">
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-s" onclick="closeSettings()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveSettings()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirmOv">
+  <div class="confirm-box">
+    <h3 id="cfTitle">Tens a certeza?</h3>
+    <p id="cfText">Esta acção não pode ser desfeita.</p>
+    <div class="confirm-acts">
+      <button class="btn btn-s" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-d" id="cfBtn">Apagar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let exercicios=[],treinos=[],notas=[];
+let currentTab='exercicios';
+let currentEx=null,currentTr=null,currentNota=null;
+let editingEx=null,editingTr=null,editingTrEx=null,editingNota=null;
+let exPhoto=null,exFilterGrp='';
+
+const GROUPS=['Peito','Costas','Ombros','Bíceps','Tríceps','Antebraços',
+  'Abdominais','Quadríceps','Posterior','Glúteos','Gémeos','Full Body','Cardio','Outro'];
+
+// ══════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════
+function getApiUrl(){ return (localStorage.getItem('treinos_api_url')||'').replace(/\/$/,''); }
+function getApiKey(){ return localStorage.getItem('treinos_api_key')||''; }
+
+async function apiFetch(path, opts={}){
+  const base=getApiUrl();
+  if(!base) throw new Error('Sem URL de API');
+  const key=getApiKey();
+  const headers={'Content-Type':'application/json',...(opts.headers||{})};
+  if(key) headers['X-API-Key']=key;
+  const res=await fetch(base+path,{...opts,headers});
+  if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if(res.status===204) return null;
+  return res.json();
+}
+
+function setStatus(s){
+  document.getElementById('statusDot').className='status-dot '+s;
+}
+
+function setSaving(btnId, saving){
+  const btn=document.getElementById(btnId);
+  if(!btn) return;
+  if(saving){ btn.innerHTML='<span class="spinner"></span> A guardar...'; btn.disabled=true; }
+  else{ btn.innerHTML='💾 Guardar'; btn.disabled=false; }
+}
+
+// ══════════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════════
+function saveLocal(){
+  try{
+    localStorage.setItem('gym_ex',JSON.stringify(exercicios.map(x=>({...x,photo:null}))));
+    localStorage.setItem('gym_tr',JSON.stringify(treinos));
+    localStorage.setItem('gym_no',JSON.stringify(notas));
+  }catch{
+    try{
+      localStorage.setItem('gym_tr',JSON.stringify(treinos));
+      localStorage.setItem('gym_no',JSON.stringify(notas));
+    }catch{}
+  }
+}
+function loadLocal(){
+  exercicios=JSON.parse(localStorage.getItem('gym_ex')||'[]');
+  treinos=JSON.parse(localStorage.getItem('gym_tr')||'[]');
+  notas=JSON.parse(localStorage.getItem('gym_no')||'[]');
+}
+
+async function loadAll(){
+  if(!getApiUrl()){loadLocal();setStatus('gray');renderAll();return;}
+  try{
+    [exercicios,treinos,notas]=await Promise.all([
+      apiFetch('/exercicios'),apiFetch('/treinos'),apiFetch('/notas')
+    ]);
+    saveLocal();setStatus('green');
+  }catch(e){
+    console.warn('API indisponível, a usar cache local:',e);
+    loadLocal();setStatus('red');
+  }
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+function openSettings(){
+  document.getElementById('cfgUrl').value=getApiUrl();
+  document.getElementById('cfgKey').value=getApiKey();
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('open'); }
+function saveSettings(){
+  localStorage.setItem('treinos_api_url',document.getElementById('cfgUrl').value.trim());
+  localStorage.setItem('treinos_api_key',document.getElementById('cfgKey').value.trim());
+  closeSettings();
+  loadAll();
+}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function uid(){return crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16)});}
+function now(){return new Date().toISOString();}
+function fmtDate(iso){if(!iso)return'';return new Date(iso).toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'});}
+function autoLink(text){
+  if(!text)return'';
+  const e=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return e.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+function groupColor(g){
+  const m={'Peito':'#3b82f6','Costas':'#22c55e','Ombros':'#a855f7','Bíceps':'#f97316',
+    'Tríceps':'#ef4444','Antebraços':'#f43f5e','Abdominais':'#eab308','Quadríceps':'#14b8a6',
+    'Posterior':'#6366f1','Glúteos':'#ec4899','Gémeos':'#84cc16','Full Body':'#f97316','Cardio':'#06b6d4'};
+  return m[g]||'#94a3b8';
+}
+function cfm(title,text,cb){
+  document.getElementById('cfTitle').textContent=title;
+  document.getElementById('cfText').textContent=text;
+  document.getElementById('confirmOv').classList.add('open');
+  document.getElementById('cfBtn').onclick=()=>{closeConfirm();cb();};
+}
+function closeConfirm(){document.getElementById('confirmOv').classList.remove('open');}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function showTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  backToExList(true);backToTrList(true);backToNotasList(true);
+  renderAll();
+}
+function renderAll(){renderExercicios();renderTreinos();renderNotas();}
+
+function fabAction(){
+  if(currentTab==='exercicios') openExModal();
+  else if(currentTab==='treinos'){
+    if(document.getElementById('tr-detail').classList.contains('active')) openTrExModal();
+    else openTrModal();
+  } else openNotaModal();
+}
+
+// ══════════════════════════════════════════════
+// EXERCÍCIOS — render
+// ══════════════════════════════════════════════
+function renderExercicios(){
+  const search=(document.getElementById('exSearch').value||'').toLowerCase();
+  const group=exFilterGrp;
+  const allGrps=[...new Set(exercicios.map(e=>e.group).filter(Boolean))].sort();
+  document.getElementById('groupsDL').innerHTML=[...new Set([...GROUPS,...allGrps])].map(g=>`<option value="${g}">`).join('');
+  const sel=document.getElementById('exGroupSel');
+  sel.innerHTML='<option value="">Todos os músculos</option>'+allGrps.map(g=>`<option value="${g}"${g===group?' selected':''}>${g}</option>`).join('');
+  document.getElementById('exPills').innerHTML=['Todos',...allGrps].map(g=>{
+    const v=g==='Todos'?'':g;
+    return`<button class="pill-btn${exFilterGrp===v?' active':''}" onclick="setExFilter('${v}')">${g}</button>`;
+  }).join('');
+  const f=exercicios.filter(e=>(!search||e.name.toLowerCase().includes(search)||(e.group||'').toLowerCase().includes(search))&&(!group||e.group===group));
+  const grid=document.getElementById('exGrid');
+  if(!f.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏋️</div><div class="empty-title">Sem exercícios</div><div class="empty-text">Clica ＋ para adicionar o primeiro</div></div>`;return;}
+  grid.innerHTML=f.map(e=>`<div class="card" onclick="viewEx('${e.id}')">
+    <div class="card-thumb" style="background:${groupColor(e.group)}18">
+      ${e.photo?`<img src="${e.photo}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:2.8rem">${e.emoji||'💪'}</span>`}
+    </div>
+    <div class="card-body"><div class="card-name">${e.name}</div>${e.group?`<span class="card-tag">${e.group}</span>`:''}</div>
+  </div>`).join('');
+}
+function setExFilter(g){exFilterGrp=g;renderExercicios();}
+
+function viewEx(id){
+  const e=exercicios.find(x=>x.id===id);if(!e)return;
+  currentEx=e;
+  document.getElementById('ex-list').style.display='none';
+  document.getElementById('ex-detail').classList.add('active');
+  document.getElementById('ex-d-name').textContent=(e.emoji||'💪')+' '+e.name;
+  document.getElementById('ex-d-group').textContent=e.group||'';
+  document.getElementById('ex-d-photo').innerHTML=e.photo?`<img src="${e.photo}" style="width:100%;border-radius:12px;margin-bottom:16px;max-height:280px;object-fit:cover">`:'';
+  let html='';
+  if(e.description)html+=`<div class="sv-box"><div class="sv-box-title">📝 Descrição / Técnica</div><div class="sv-box-content">${autoLink(e.description)}</div></div>`;
+  if(e.video)html+=`<div class="sv-box"><div class="sv-box-title">🎬 Vídeo</div><a href="${e.video}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.9rem;font-weight:500">▶ Ver vídeo</a></div>`;
+  if(e.notes)html+=`<div class="sv-box" style="opacity:.72"><div class="sv-box-title">💬 Notas</div><div class="sv-box-content">${autoLink(e.notes)}</div></div>`;
+  document.getElementById('ex-d-content').innerHTML=html;
+}
+function backToExList(silent){document.getElementById('ex-list').style.display='';document.getElementById('ex-detail').classList.remove('active');if(!silent)currentEx=null;}
+
+// ══════════════════════════════════════════════
+// EXERCÍCIOS — CRUD
+// ══════════════════════════════════════════════
+function openExModal(ex){
+  editingEx=ex||null;exPhoto=ex?.photo||null;
+  document.getElementById('exModalTitle').textContent=ex?'Editar Exercício':'Novo Exercício';
+  document.getElementById('exName').value=ex?.name||'';
+  document.getElementById('exGroup').value=ex?.group||'';
+  document.getElementById('exEmoji').value=ex?.emoji||'💪';
+  document.getElementById('exDesc').value=ex?.description||'';
+  document.getElementById('exVideo').value=ex?.video||'';
+  document.getElementById('exNotes').value=ex?.notes||'';
+  const prev=document.getElementById('exPhotoPrev'),txt=document.getElementById('exPhotoTxt');
+  if(ex?.photo){prev.src=ex.photo;prev.style.display='block';txt.style.display='none';}
+  else{prev.style.display='none';txt.style.display='block';}
+  document.getElementById('exDelBtn').style.display=ex?'inline-flex':'none';
+  document.getElementById('exModal').classList.add('open');
+}
+function closeExModal(){document.getElementById('exModal').classList.remove('open');editingEx=null;}
+function handleExPhoto(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{exPhoto=ev.target.result;document.getElementById('exPhotoPrev').src=exPhoto;document.getElementById('exPhotoPrev').style.display='block';document.getElementById('exPhotoTxt').style.display='none';};
+  r.readAsDataURL(file);
+}
+
+async function saveEx(){
+  const name=document.getElementById('exName').value.trim();if(!name){alert('Nome obrigatório');return;}
+  const body={name,group:document.getElementById('exGroup').value.trim(),emoji:document.getElementById('exEmoji').value.trim()||'💪',
+    description:document.getElementById('exDesc').value.trim(),video:document.getElementById('exVideo').value.trim(),
+    notes:document.getElementById('exNotes').value.trim(),photo:exPhoto};
+  setSaving('exSaveBtn',true);
+  try{
+    let result;
+    if(editingEx){
+      if(getApiUrl()) result=await apiFetch(`/exercicios/${editingEx.id}`,{method:'PUT',body:JSON.stringify(body)});
+      else result={...editingEx,...body,updated_at:now()};
+      Object.assign(editingEx,result||body);
+      if(currentEx?.id===editingEx.id) viewEx(editingEx.id);
+    }else{
+      if(getApiUrl()) result=await apiFetch('/exercicios',{method:'POST',body:JSON.stringify(body)});
+      else result={id:uid(),created_at:now(),updated_at:now(),...body};
+      exercicios.push(result);
+    }
+    saveLocal();closeExModal();renderExercicios();
+  }catch(e){alert('Erro ao guardar: '+e.message);}
+  finally{setSaving('exSaveBtn',false);}
+}
+
+function confirmDeleteEx(){
+  const ex=editingEx||currentEx;if(!ex)return;
+  cfm('Apagar exercício?',`"${ex.name}" será removido permanentemente.`,async()=>{
+    try{
+      if(getApiUrl()) await apiFetch(`/exercicios/${ex.id}`,{method:'DELETE'});
+      exercicios=exercicios.filter(e=>e.id!==ex.id);
+      treinos.forEach(t=>{t.exercises=(t.exercises||[]).filter(x=>x.exercise_id!==ex.id);});
+      saveLocal();closeExModal();backToExList();renderExercicios();renderTreinos();
+    }catch(e){alert('Erro ao apagar: '+e.message);}
+  });
+}
+
+// ══════════════════════════════════════════════
+// TREINOS — render
+// ══════════════════════════════════════════════
+function renderTreinos(){
+  let html='';
+  treinos.forEach((t,i)=>{
+    const cnt=(t.exercises||[]).length;
+    html+=`<div class="tr-card tr-color-${i%8}" onclick="viewTr('${t.id}')">
+      <div class="tr-card-hdr">
+        <div class="tr-emoji">${t.emoji||'💪'}</div>
+        <div class="tr-info"><div class="tr-name">${t.name}</div><div class="tr-count">${cnt} exercício${cnt!==1?'s':''}</div></div>
+        <span style="color:#94a3b8;font-size:1.2rem">›</span>
+      </div>
+      ${cnt?`<div style="padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:6px">
+        ${(t.exercises||[]).slice(0,5).map(x=>`<span class="pill pill-o">${x.name}</span>`).join('')}
+        ${cnt>5?`<span class="pill" style="background:#f1f5f9;color:#64748b">+${cnt-5}</span>`:''}
+      </div>`:''}
+    </div>`;
+  });
+  html+=`<div class="card-add" onclick="openTrModal()"><div style="font-size:1.5rem">📋</div><div>Novo Treino</div></div>`;
+  document.getElementById('trGrid').innerHTML=html;
+}
+
+function viewTr(id){
+  const t=treinos.find(x=>x.id===id);if(!t)return;
+  currentTr=t;
+  document.getElementById('tr-list').style.display='none';
+  document.getElementById('tr-detail').classList.add('active');
+  renderTrDetail();
+}
+
+function renderTrDetail(){
+  const t=currentTr;
+  document.getElementById('tr-d-name').textContent=(t.emoji||'💪')+' '+t.name;
+  const c=(t.exercises||[]).length;
+  document.getElementById('tr-d-count').textContent=`${c} exercício${c!==1?'s':''}`;
+  let html='';
+  if(t.notes)html+=`<div class="sv-box" style="opacity:.72"><div class="sv-box-title">📝 Notas do Treino</div><div class="sv-box-content">${autoLink(t.notes)}</div></div>`;
+  if(!c){html+=`<div class="empty"><div class="empty-icon">🏋️</div><div class="empty-title">Sem exercícios</div><div class="empty-text">Adiciona o primeiro exercício a este treino</div></div>`;}
+  else{
+    (t.exercises||[]).forEach((x,i)=>{
+      const lib=exercicios.find(e=>e.id===x.exercise_id);
+      html+=`<div class="ex-item">
+        <div class="ex-item-hdr">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="background:#f1f5f9;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#64748b;flex-shrink:0">${i+1}</span>
+            <div><div class="ex-item-name">${x.name}</div>${lib?.group?`<div style="font-size:.73rem;color:#94a3b8">${lib.group}</div>`:''}</div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ico btn-sm" onclick="editTrEx('${x.id}',event)">✏️</button>
+            <button class="btn btn-d btn-sm" onclick="deleteTrEx('${x.id}',event)">🗑</button>
+          </div>
+        </div>
+        <div class="ex-stats">
+          ${x.sets?`<div class="ex-stat"><div class="ex-stat-val">${x.sets}</div><div class="ex-stat-lbl">Séries</div></div>`:''}
+          ${x.reps?`<div class="ex-stat"><div class="ex-stat-val">${x.reps}</div><div class="ex-stat-lbl">Reps</div></div>`:''}
+          ${x.rest?`<div class="ex-stat"><div class="ex-stat-val">${x.rest}</div><div class="ex-stat-lbl">Descanso</div></div>`:''}
+        </div>
+        ${x.notes?`<div class="ex-notes">💬 ${x.notes}</div>`:''}
+        ${lib?.video?`<div style="margin-top:8px"><a href="${lib.video}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.82rem;font-weight:500">▶ Ver vídeo</a></div>`:''}
+      </div>`;
+    });
+  }
+  document.getElementById('tr-d-content').innerHTML=html;
+}
+function backToTrList(silent){document.getElementById('tr-list').style.display='';document.getElementById('tr-detail').classList.remove('active');if(!silent)currentTr=null;}
+
+// ══════════════════════════════════════════════
+// TREINOS — CRUD
+// ══════════════════════════════════════════════
+function openTrModal(tr){
+  editingTr=tr||null;
+  document.getElementById('trModalTitle').textContent=tr?'Editar Treino':'Novo Treino';
+  document.getElementById('trName').value=tr?.name||'';
+  document.getElementById('trEmoji').value=tr?.emoji||'💪';
+  document.getElementById('trNotes').value=tr?.notes||'';
+  document.getElementById('trDelBtn').style.display=tr?'inline-flex':'none';
+  document.getElementById('trModal').classList.add('open');
+}
+function closeTrModal(){document.getElementById('trModal').classList.remove('open');editingTr=null;}
+
+async function saveTreino(){
+  const name=document.getElementById('trName').value.trim();if(!name){alert('Nome obrigatório');return;}
+  const body={name,emoji:document.getElementById('trEmoji').value.trim()||'💪',notes:document.getElementById('trNotes').value.trim()};
+  setSaving('trSaveBtn',true);
+  try{
+    let result;
+    if(editingTr){
+      if(getApiUrl()) result=await apiFetch(`/treinos/${editingTr.id}`,{method:'PUT',body:JSON.stringify(body)});
+      else result={...editingTr,...body,updated_at:now()};
+      Object.assign(editingTr,result||body);
+      if(currentTr?.id===editingTr.id) renderTrDetail();
+    }else{
+      const newTr={...body,exercises:[]};
+      if(getApiUrl()) result=await apiFetch('/treinos',{method:'POST',body:JSON.stringify(newTr)});
+      else result={id:uid(),created_at:now(),updated_at:now(),...newTr};
+      treinos.push(result);
+    }
+    saveLocal();closeTrModal();renderTreinos();
+  }catch(e){alert('Erro ao guardar: '+e.message);}
+  finally{setSaving('trSaveBtn',false);}
+}
+
+function confirmDeleteTr(){
+  const t=editingTr||currentTr;if(!t)return;
+  cfm('Apagar treino?',`"${t.name}" e todos os seus exercícios serão removidos.`,async()=>{
+    try{
+      if(getApiUrl()) await apiFetch(`/treinos/${t.id}`,{method:'DELETE'});
+      treinos=treinos.filter(x=>x.id!==t.id);
+      saveLocal();closeTrModal();backToTrList();renderTreinos();
+    }catch(e){alert('Erro ao apagar: '+e.message);}
+  });
+}
+
+// ── Exercícios dentro do Treino ──────────────────────────────────────────────
+function openTrExModal(item){
+  if(!currentTr)return;
+  editingTrEx=item||null;
+  document.getElementById('trExModalTitle').textContent=item?'Editar Exercício':'Adicionar Exercício';
+  document.getElementById('trExSearch').value=item?.name||'';
+  document.getElementById('trExLibId').value=item?.exercise_id||'';
+  document.getElementById('trExItemId').value=item?.id||'';
+  document.getElementById('trExSets').value=item?.sets||'';
+  document.getElementById('trExReps').value=item?.reps||'';
+  document.getElementById('trExRest').value=item?.rest||'';
+  document.getElementById('trExNotes').value=item?.notes||'';
+  filterExPicker();
+  document.getElementById('trExModal').classList.add('open');
+}
+function closeTrExModal(){document.getElementById('trExModal').classList.remove('open');editingTrEx=null;}
+function filterExPicker(){
+  const q=(document.getElementById('trExSearch').value||'').toLowerCase();
+  const list=document.getElementById('exPickerList');
+  if(!exercicios.length){list.innerHTML=`<div style="padding:10px 12px;color:var(--muted);font-size:.85rem">Biblioteca vazia — o nome será guardado tal como está</div>`;return;}
+  const f=exercicios.filter(e=>!q||e.name.toLowerCase().includes(q)||(e.group||'').toLowerCase().includes(q));
+  if(!f.length){list.innerHTML=`<div style="padding:10px 12px;color:var(--muted);font-size:.85rem">Sem resultados — será guardado como personalizado</div>`;return;}
+  list.innerHTML=f.slice(0,15).map(e=>`<div class="ex-picker-item" onclick="pickEx('${e.id}','${e.name.replace(/'/g,"\\'")}')"><span>${e.emoji||'💪'} ${e.name}</span><span class="ex-picker-tag">${e.group||''}</span></div>`).join('');
+}
+function pickEx(id,name){document.getElementById('trExLibId').value=id;document.getElementById('trExSearch').value=name;document.getElementById('exPickerList').innerHTML='';}
+
+async function saveTrEx(){
+  if(!currentTr)return;
+  const name=document.getElementById('trExSearch').value.trim();if(!name){alert('Nome do exercício obrigatório');return;}
+  if(!currentTr.exercises)currentTr.exercises=[];
+  const itemId=document.getElementById('trExItemId').value;
+  const exData={name,exercise_id:document.getElementById('trExLibId').value||null,
+    sets:document.getElementById('trExSets').value.trim(),reps:document.getElementById('trExReps').value.trim(),
+    rest:document.getElementById('trExRest').value.trim(),notes:document.getElementById('trExNotes').value.trim()};
+  if(itemId){
+    const idx=currentTr.exercises.findIndex(x=>x.id===itemId);
+    if(idx>=0) Object.assign(currentTr.exercises[idx],exData);
+  }else{
+    currentTr.exercises.push({id:uid(),...exData});
+  }
+  setSaving('trExSaveBtn',true);
+  try{
+    if(getApiUrl()) await apiFetch(`/treinos/${currentTr.id}`,{method:'PUT',body:JSON.stringify({exercises:currentTr.exercises})});
+    saveLocal();closeTrExModal();renderTrDetail();renderTreinos();
+  }catch(e){alert('Erro ao guardar: '+e.message);}
+  finally{setSaving('trExSaveBtn',false);}
+}
+function editTrEx(itemId,e){e&&e.stopPropagation();const item=currentTr?.exercises?.find(x=>x.id===itemId);if(item)openTrExModal(item);}
+function deleteTrEx(itemId,e){
+  e&&e.stopPropagation();
+  const item=currentTr?.exercises?.find(x=>x.id===itemId);if(!item)return;
+  cfm('Remover exercício?',`"${item.name}" será removido deste treino.`,async()=>{
+    currentTr.exercises=currentTr.exercises.filter(x=>x.id!==itemId);
+    try{
+      if(getApiUrl()) await apiFetch(`/treinos/${currentTr.id}`,{method:'PUT',body:JSON.stringify({exercises:currentTr.exercises})});
+      saveLocal();renderTrDetail();renderTreinos();
+    }catch(e){alert('Erro ao guardar: '+e.message);}
+  });
+}
+
+// ══════════════════════════════════════════════
+// NOTAS — render
+// ══════════════════════════════════════════════
+function renderNotas(){
+  const grid=document.getElementById('notasGrid');
+  if(!notas.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📓</div><div class="empty-title">Sem notas</div><div class="empty-text">Guarda links, apontamentos e referências de exercícios</div></div>`;return;}
+  grid.innerHTML=notas.map(n=>`<div class="note-card" onclick="viewNota('${n.id}')">
+    <div class="note-title">${n.title||'Sem título'}</div>
+    <div class="note-preview">${n.content||''}</div>
+    ${(n.exercise_ids||[]).length?`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+      ${(n.exercise_ids||[]).map(eid=>{const ex=exercicios.find(e=>e.id===eid);return ex?`<span class="pill pill-o">${ex.emoji||'💪'} ${ex.name}</span>`:''}).join('')}
+    </div>`:''}
+    <div class="note-date">${fmtDate(n.updated_at||n.created_at)}</div>
+  </div>`).join('');
+}
+
+function viewNota(id){
+  const n=notas.find(x=>x.id===id);if(!n)return;
+  currentNota=n;
+  document.getElementById('notas-list').style.display='none';
+  document.getElementById('notas-detail').classList.add('active');
+  document.getElementById('nota-d-title').textContent=n.title||'Sem título';
+  document.getElementById('nota-d-date').textContent=fmtDate(n.updated_at||n.created_at);
+  let html='';
+  if(n.content)html+=`<div class="sv-box"><div class="sv-box-title">📝 Conteúdo</div><div class="sv-box-content note-content">${autoLink(n.content)}</div></div>`;
+  if((n.exercise_ids||[]).length){
+    const items=(n.exercise_ids||[]).map(eid=>{
+      const ex=exercicios.find(e=>e.id===eid);if(!ex)return'';
+      return`<div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0" onclick="showTab('exercicios');setTimeout(()=>viewEx('${ex.id}'),80)">
+        <span style="font-size:1.3rem">${ex.emoji||'💪'}</span>
+        <div><div style="font-weight:600;font-size:.9rem">${ex.name}</div>${ex.group?`<div style="font-size:.73rem;color:#94a3b8">${ex.group}</div>`:''}</div>
+      </div>`;
+    }).filter(Boolean).join('<hr style="border:none;border-top:1px solid var(--border);margin:4px 0">');
+    html+=`<div class="sv-box"><div class="sv-box-title">🏋️ Exercícios</div>${items}</div>`;
+  }
+  document.getElementById('nota-d-content').innerHTML=html;
+}
+function backToNotasList(silent){document.getElementById('notas-list').style.display='';document.getElementById('notas-detail').classList.remove('active');if(!silent)currentNota=null;}
+
+// ══════════════════════════════════════════════
+// NOTAS — CRUD
+// ══════════════════════════════════════════════
+function openNotaModal(nota){
+  editingNota=nota||null;
+  document.getElementById('notaModalTitle').textContent=nota?'Editar Nota':'Nova Nota';
+  document.getElementById('notaTitle').value=nota?.title||'';
+  document.getElementById('notaContent').value=nota?.content||'';
+  document.getElementById('notaDelBtn').style.display=nota?'inline-flex':'none';
+  const sel=document.getElementById('notaExSel');
+  sel.innerHTML='<option value="">+ Associar exercício...</option>'+exercicios.map(e=>`<option value="${e.id}">${e.emoji||'💪'} ${e.name}</option>`).join('');
+  const ids=nota?.exercise_ids||[];
+  document.getElementById('notaExIds').value=JSON.stringify(ids);
+  renderNotaExTags(ids);
+  document.getElementById('notaModal').classList.add('open');
+}
+function closeNotaModal(){document.getElementById('notaModal').classList.remove('open');editingNota=null;}
+function renderNotaExTags(ids){
+  document.getElementById('notaExTags').innerHTML=ids.map(eid=>{
+    const ex=exercicios.find(e=>e.id===eid);if(!ex)return'';
+    return`<span class="pill pill-o" style="cursor:pointer" onclick="removeNotaEx('${eid}')">${ex.emoji||'💪'} ${ex.name} ✕</span>`;
+  }).filter(Boolean).join('');
+}
+function addNotaEx(sel){
+  const id=sel.value;if(!id)return;
+  let ids=JSON.parse(document.getElementById('notaExIds').value||'[]');
+  if(!ids.includes(id)){ids.push(id);document.getElementById('notaExIds').value=JSON.stringify(ids);}
+  renderNotaExTags(ids);sel.value='';
+}
+function removeNotaEx(id){
+  let ids=JSON.parse(document.getElementById('notaExIds').value||'[]');
+  ids=ids.filter(x=>x!==id);document.getElementById('notaExIds').value=JSON.stringify(ids);renderNotaExTags(ids);
+}
+
+async function saveNota(){
+  const title=document.getElementById('notaTitle').value.trim();
+  const content=document.getElementById('notaContent').value.trim();
+  if(!title&&!content){alert('Título ou conteúdo obrigatório');return;}
+  const body={title,content,exercise_ids:JSON.parse(document.getElementById('notaExIds').value||'[]')};
+  setSaving('notaSaveBtn',true);
+  try{
+    let result;
+    if(editingNota){
+      if(getApiUrl()) result=await apiFetch(`/notas/${editingNota.id}`,{method:'PUT',body:JSON.stringify(body)});
+      else result={...editingNota,...body,updated_at:now()};
+      Object.assign(editingNota,result||body);
+      if(currentNota?.id===editingNota.id) viewNota(editingNota.id);
+    }else{
+      if(getApiUrl()) result=await apiFetch('/notas',{method:'POST',body:JSON.stringify(body)});
+      else result={id:uid(),created_at:now(),updated_at:now(),...body};
+      notas.unshift(result);
+    }
+    saveLocal();closeNotaModal();renderNotas();
+  }catch(e){alert('Erro ao guardar: '+e.message);}
+  finally{setSaving('notaSaveBtn',false);}
+}
+
+function confirmDeleteNota(){
+  const nota=editingNota||currentNota;if(!nota)return;
+  cfm('Apagar nota?',`"${nota.title||'Esta nota'}" será removida permanentemente.`,async()=>{
+    try{
+      if(getApiUrl()) await apiFetch(`/notas/${nota.id}`,{method:'DELETE'});
+      notas=notas.filter(n=>n.id!==nota.id);
+      saveLocal();closeNotaModal();backToNotasList();renderNotas();
+    }catch(e){alert('Erro ao apagar: '+e.message);}
+  });
+}
+
+// ══════════════════════════════════════════════
+// IMPORT / EXPORT
+// ══════════════════════════════════════════════
+function exportJSON(){
+  const data={exported_at:now(),exercicios,treinos,notas};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download=`treinos_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.exercicios)exercicios=d.exercicios;
+      if(d.treinos)treinos=d.treinos;
+      if(d.notas)notas=d.notas;
+      saveLocal();renderAll();alert('✅ Dados importados com sucesso!');
+    }catch(err){alert('Erro ao importar: '+err.message);}
+  };
+  r.readAsText(file);e.target.value='';
+}
+
+// ══════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));closeConfirm();}
+});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+loadAll();
+</script>
+</body>
+</html>
