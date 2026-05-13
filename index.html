@@ -126,6 +126,18 @@ textarea.fc{resize:vertical;min-height:80px}
 .empty-text{font-size:.88rem}
 .fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 14px rgba(249,115,22,.45);transition:all .2s;display:flex;align-items:center;justify-content:center;z-index:100}
 .fab:hover{transform:scale(1.1)}
+.item-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.list-row{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:8px 12px 8px 8px;cursor:pointer;transition:box-shadow .15s}
+.list-row:hover{box-shadow:var(--shm)}
+.list-row-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0}
+.list-row-placeholder{width:64px;height:64px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;background:#f8fafc}
+.list-row-body{flex:1;min-width:0}
+.list-row-body .row-name{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row-body .row-sub{font-size:.8rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row-arrow{color:var(--muted);font-size:1.2rem;flex-shrink:0}
+.link-tag{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.82rem;margin:2px 0}
+.link-tag a{color:var(--accent);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-tag button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.9rem;padding:0;line-height:1}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:600px){
@@ -162,11 +174,12 @@ textarea.fc{resize:vertical;min-height:80px}
   <div class="content">
     <div id="ex-list">
       <div class="search-row">
-        <input class="search-input" id="exSearch" placeholder="🔍 Pesquisar..." oninput="renderExercicios()">
+        <input class="search-input" id="exSearch" placeholder="🔍 Pesquisar exercícios..." oninput="renderExercicios()">
         <select class="filter-sel" id="exGroupSel" onchange="setExFilter(this.value)"></select>
+        <button class="btn btn-p btn-sm" onclick="openExModal()">＋ Novo</button>
       </div>
       <div class="pills" id="exPills"></div>
-      <div class="grid" id="exGrid"></div>
+      <div id="exGrid"></div>
     </div>
     <div id="ex-detail" class="detail-view">
       <div class="detail-hdr">
@@ -189,7 +202,13 @@ textarea.fc{resize:vertical;min-height:80px}
 <!-- TREINOS -->
 <div id="page-treinos" class="page">
   <div class="content">
-    <div id="tr-list"><div id="trGrid"></div></div>
+    <div id="tr-list">
+      <div class="search-row">
+        <input class="search-input" id="trSearch" placeholder="🔍 Pesquisar treinos..." oninput="renderTreinos()">
+        <button class="btn btn-p btn-sm" onclick="openTrModal()">＋ Novo</button>
+      </div>
+      <div id="trGrid"></div>
+    </div>
     <div id="tr-detail" class="detail-view">
       <div class="detail-hdr">
         <button class="detail-back" onclick="backToTrList()">← Voltar</button>
@@ -211,7 +230,13 @@ textarea.fc{resize:vertical;min-height:80px}
 <!-- NOTAS -->
 <div id="page-notas" class="page">
   <div class="content">
-    <div id="notas-list"><div class="notes-grid" id="notasGrid"></div></div>
+    <div id="notas-list">
+      <div class="search-row">
+        <input class="search-input" id="notasSearch" placeholder="🔍 Pesquisar notas..." oninput="renderNotas()">
+        <button class="btn btn-p btn-sm" onclick="openNotaModal()">＋ Nova</button>
+      </div>
+      <div id="notasGrid"></div>
+    </div>
     <div id="notas-detail" class="detail-view">
       <div class="detail-hdr">
         <button class="detail-back" onclick="backToNotasList()">← Voltar</button>
@@ -327,6 +352,15 @@ textarea.fc{resize:vertical;min-height:80px}
       <div class="fg">
         <label class="fl">Conteúdo (texto, links, apontamentos)</label>
         <textarea class="fc" id="notaContent" style="min-height:160px" placeholder="Escreve aqui... URLs tornam-se links clicáveis automaticamente."></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Links (URLs)</label>
+        <div id="notaLinksList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:6px">
+          <input class="fc" id="notaLinkInput" placeholder="https://..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addNotaLink();}">
+          <button type="button" class="btn btn-s btn-sm" onclick="addNotaLink()">＋ Adicionar</button>
+        </div>
+        <input type="hidden" id="notaLinks" value="[]">
       </div>
       <div class="fg">
         <label class="fl">Exercícios relacionados</label>
@@ -535,15 +569,19 @@ function renderExercicios(){
     const v=g==='Todos'?'':g;
     return`<button class="pill-btn${exFilterGrp===v?' active':''}" onclick="setExFilter('${v}')">${g}</button>`;
   }).join('');
-  const f=exercicios.filter(e=>(!search||e.name.toLowerCase().includes(search)||(e.group||'').toLowerCase().includes(search))&&(!group||e.group===group));
+  const f=exercicios.filter(e=>(!search||e.name.toLowerCase().includes(search)||(e.group||'').toLowerCase().includes(search))&&(!group||e.group===group))
+    .sort((a,b)=>a.name.localeCompare(b.name,'pt'));
   const grid=document.getElementById('exGrid');
-  if(!f.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏋️</div><div class="empty-title">Sem exercícios</div><div class="empty-text">Clica ＋ para adicionar o primeiro</div></div>`;return;}
-  grid.innerHTML=f.map(e=>`<div class="card" onclick="viewEx('${e.id}')">
-    <div class="card-thumb" style="background:${groupColor(e.group)}18">
-      ${e.photo?`<img src="${e.photo}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:2.8rem">${e.emoji||'💪'}</span>`}
+  if(!f.length){grid.innerHTML=`<div class="empty"><div class="empty-icon">🏋️</div><div class="empty-title">Sem exercícios</div><div class="empty-text">Clica ＋ para adicionar o primeiro</div></div>`;return;}
+  grid.innerHTML=`<div class="item-list">${f.map(e=>`<div class="list-row" onclick="viewEx('${e.id}')">
+    ${e.photo?`<img class="list-row-thumb" src="${e.photo}" loading="lazy"/>`
+             :`<div class="list-row-placeholder" style="background:${groupColor(e.group)}22">${e.emoji||'💪'}</div>`}
+    <div class="list-row-body">
+      <div class="row-name">${e.name}</div>
+      ${e.group?`<div class="row-sub">${e.group}</div>`:''}
     </div>
-    <div class="card-body"><div class="card-name">${e.name}</div>${e.group?`<span class="card-tag">${e.group}</span>`:''}</div>
-  </div>`).join('');
+    <span class="list-row-arrow">›</span>
+  </div>`).join('')}</div>`;
 }
 function setExFilter(g){exFilterGrp=g;renderExercicios();}
 
@@ -628,22 +666,27 @@ function confirmDeleteEx(){
 // TREINOS — render
 // ══════════════════════════════════════════════
 function renderTreinos(){
+  const q=(document.getElementById('trSearch')?.value||'').toLowerCase();
+  const list=treinos.filter(t=>!q||t.name.toLowerCase().includes(q));
   let html='';
-  treinos.forEach((t,i)=>{
-    const cnt=(t.exercises||[]).length;
-    html+=`<div class="tr-card tr-color-${i%8}" onclick="viewTr('${t.id}')">
-      <div class="tr-card-hdr">
-        <div class="tr-emoji">${t.emoji||'💪'}</div>
-        <div class="tr-info"><div class="tr-name">${t.name}</div><div class="tr-count">${cnt} exercício${cnt!==1?'s':''}</div></div>
-        <span style="color:#94a3b8;font-size:1.2rem">›</span>
-      </div>
-      ${cnt?`<div style="padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:6px">
-        ${(t.exercises||[]).slice(0,5).map(x=>`<span class="pill pill-o">${x.name}</span>`).join('')}
-        ${cnt>5?`<span class="pill" style="background:#f1f5f9;color:#64748b">+${cnt-5}</span>`:''}
-      </div>`:''}
-    </div>`;
-  });
-  html+=`<div class="card-add" onclick="openTrModal()"><div style="font-size:1.5rem">📋</div><div>Novo Treino</div></div>`;
+  if(!list.length){
+    html=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sem treinos</div><div class="empty-text">${treinos.length?'Sem resultados.':'Clica ＋ para criar o primeiro treino'}</div></div>`;
+  } else {
+    list.forEach((t,i)=>{
+      const cnt=(t.exercises||[]).length;
+      html+=`<div class="tr-card tr-color-${i%8}" onclick="viewTr('${t.id}')">
+        <div class="tr-card-hdr">
+          <div class="tr-emoji">${t.emoji||'💪'}</div>
+          <div class="tr-info"><div class="tr-name">${t.name}</div><div class="tr-count">${cnt} exercício${cnt!==1?'s':''}</div></div>
+          <span style="color:#94a3b8;font-size:1.2rem">›</span>
+        </div>
+        ${cnt?`<div style="padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:6px">
+          ${(t.exercises||[]).slice(0,5).map(x=>`<span class="pill pill-o">${x.name}</span>`).join('')}
+          ${cnt>5?`<span class="pill" style="background:#f1f5f9;color:#64748b">+${cnt-5}</span>`:''}
+        </div>`:''}
+      </div>`;
+    });
+  }
   document.getElementById('trGrid').innerHTML=html;
 }
 
@@ -802,16 +845,25 @@ function deleteTrEx(itemId,e){
 // NOTAS — render
 // ══════════════════════════════════════════════
 function renderNotas(){
+  const q=(document.getElementById('notasSearch')?.value||'').toLowerCase();
+  const list=notas.filter(n=>!q||(n.title||'').toLowerCase().includes(q)||(n.content||'').toLowerCase().includes(q));
   const grid=document.getElementById('notasGrid');
-  if(!notas.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📓</div><div class="empty-title">Sem notas</div><div class="empty-text">Guarda links, apontamentos e referências de exercícios</div></div>`;return;}
-  grid.innerHTML=notas.map(n=>`<div class="note-card" onclick="viewNota('${n.id}')">
-    <div class="note-title">${n.title||'Sem título'}</div>
-    <div class="note-preview">${n.content||''}</div>
-    ${(n.exercise_ids||[]).length?`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
-      ${(n.exercise_ids||[]).map(eid=>{const ex=exercicios.find(e=>e.id===eid);return ex?`<span class="pill pill-o">${ex.emoji||'💪'} ${ex.name}</span>`:''}).join('')}
-    </div>`:''}
-    <div class="note-date">${fmtDate(n.updated_at||n.created_at)}</div>
-  </div>`).join('');
+  if(!list.length){
+    grid.innerHTML=`<div class="empty"><div class="empty-icon">📓</div><div class="empty-title">${notas.length?'Sem resultados':'Sem notas'}</div><div class="empty-text">Guarda links, apontamentos e referências de exercícios</div></div>`;
+    return;
+  }
+  grid.innerHTML=`<div class="item-list">${list.map(n=>{
+    const exs=(n.exercise_ids||[]).map(eid=>{const ex=exercicios.find(e=>e.id===eid);return ex?ex.name:null;}).filter(Boolean);
+    const sub=exs.length?`🏋️ ${exs.slice(0,3).join(', ')}${exs.length>3?'…':''}`:((n.content||'').slice(0,60)||(n.links||[]).length?`🔗 ${n.links[0]}`:'');
+    return`<div class="list-row" onclick="viewNota('${n.id}')">
+      <div class="list-row-placeholder" style="background:#fff7ed;font-size:26px">📓</div>
+      <div class="list-row-body">
+        <div class="row-name">${n.title||'Sem título'}</div>
+        ${sub?`<div class="row-sub">${sub}</div>`:''}
+      </div>
+      <span class="list-row-arrow">›</span>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function viewNota(id){
@@ -823,6 +875,11 @@ function viewNota(id){
   document.getElementById('nota-d-date').textContent=fmtDate(n.updated_at||n.created_at);
   let html='';
   if(n.content)html+=`<div class="sv-box"><div class="sv-box-title">📝 Conteúdo</div><div class="sv-box-content note-content">${autoLink(n.content)}</div></div>`;
+  if((n.links||[]).length){
+    html+=`<div class="sv-box"><div class="sv-box-title">🔗 Links</div><div style="display:flex;flex-direction:column;gap:6px">
+      ${(n.links||[]).map(l=>`<a href="${l}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.88rem;word-break:break-all">${l}</a>`).join('')}
+    </div></div>`;
+  }
   if((n.exercise_ids||[]).length){
     const items=(n.exercise_ids||[]).map(eid=>{
       const ex=exercicios.find(e=>e.id===eid);if(!ex)return'';
@@ -851,7 +908,28 @@ function openNotaModal(nota){
   const ids=nota?.exercise_ids||[];
   document.getElementById('notaExIds').value=JSON.stringify(ids);
   renderNotaExTags(ids);
+  const links=nota?.links||[];
+  document.getElementById('notaLinks').value=JSON.stringify(links);
+  document.getElementById('notaLinkInput').value='';
+  renderNotaLinks(links);
   document.getElementById('notaModal').classList.add('open');
+}
+function renderNotaLinks(links){
+  document.getElementById('notaLinksList').innerHTML=(links||[]).map((l,i)=>`
+    <div class="link-tag"><a href="${l}" target="_blank" rel="noopener">${l}</a>
+    <button onclick="removeNotaLink(${i})" title="Remover">✕</button></div>`).join('');
+}
+function addNotaLink(){
+  const input=document.getElementById('notaLinkInput');
+  let url=input.value.trim();if(!url)return;
+  if(!/^https?:\/\//i.test(url))url='https://'+url;
+  let links=JSON.parse(document.getElementById('notaLinks').value||'[]');
+  if(!links.includes(url)){links.push(url);document.getElementById('notaLinks').value=JSON.stringify(links);}
+  input.value='';renderNotaLinks(links);
+}
+function removeNotaLink(i){
+  let links=JSON.parse(document.getElementById('notaLinks').value||'[]');
+  links.splice(i,1);document.getElementById('notaLinks').value=JSON.stringify(links);renderNotaLinks(links);
 }
 function closeNotaModal(){document.getElementById('notaModal').classList.remove('open');editingNota=null;}
 function renderNotaExTags(ids){
@@ -875,7 +953,7 @@ async function saveNota(){
   const title=document.getElementById('notaTitle').value.trim();
   const content=document.getElementById('notaContent').value.trim();
   if(!title&&!content){alert('Título ou conteúdo obrigatório');return;}
-  const body={title,content,exercise_ids:JSON.parse(document.getElementById('notaExIds').value||'[]')};
+  const body={title,content,links:JSON.parse(document.getElementById('notaLinks').value||'[]'),exercise_ids:JSON.parse(document.getElementById('notaExIds').value||'[]')};
   setSaving('notaSaveBtn',true);
   try{
     let result;
