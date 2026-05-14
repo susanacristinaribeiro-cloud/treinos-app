@@ -667,7 +667,7 @@ function confirmDeleteEx(){
 // ══════════════════════════════════════════════
 function renderTreinos(){
   const q=(document.getElementById('trSearch')?.value||'').toLowerCase();
-  const list=treinos.filter(t=>!q||t.name.toLowerCase().includes(q));
+  const list=treinos.filter(t=>!q||t.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'pt'));
   let html='';
   if(!list.length){
     html=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sem treinos</div><div class="empty-text">${treinos.length?'Sem resultados.':'Clica ＋ para criar o primeiro treino'}</div></div>`;
@@ -846,7 +846,7 @@ function deleteTrEx(itemId,e){
 // ══════════════════════════════════════════════
 function renderNotas(){
   const q=(document.getElementById('notasSearch')?.value||'').toLowerCase();
-  const list=notas.filter(n=>!q||(n.title||'').toLowerCase().includes(q)||(n.content||'').toLowerCase().includes(q));
+  const list=notas.filter(n=>!q||(n.title||'').toLowerCase().includes(q)||(n.content||'').toLowerCase().includes(q)).sort((a,b)=>(a.title||'').localeCompare(b.title||'','pt'));
   const grid=document.getElementById('notasGrid');
   if(!list.length){
     grid.innerHTML=`<div class="empty"><div class="empty-icon">📓</div><div class="empty-title">${notas.length?'Sem resultados':'Sem notas'}</div><div class="empty-text">Guarda links, apontamentos e referências de exercícios</div></div>`;
