@@ -1,0 +1,5 @@
+.env
+*.json.bak
+backup_latest.json
+__pycache__/
+*.pyc
