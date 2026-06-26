@@ -520,6 +520,44 @@ function autoLink(text){
   const e=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   return e.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
+function getVideoEmbed(url,compact){
+  if(!url)return'';
+  const esc=url.replace(/"/g,'&quot;');
+  const link=(label,small)=>`<a href="${esc}" target="_blank" rel="noopener" style="color:var(--accent);font-size:${small?'.82':'.9'}rem;font-weight:500">▶ ${label||'Ver vídeo'}</a>`;
+  // YouTube
+  const yt=url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if(yt){
+    if(compact)return link();
+    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px"><iframe src="https://www.youtube.com/embed/${yt[1]}" style="width:100%;aspect-ratio:16/9;border:0" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  // Google Drive
+  const gd=url.match(/drive\.google\.com\/(?:file\/d\/([a-zA-Z0-9_-]+)|open\?id=([a-zA-Z0-9_-]+))/);
+  if(gd){
+    const id=gd[1]||gd[2];
+    if(compact)return link();
+    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px"><iframe src="https://drive.google.com/file/d/${id}/preview" style="width:100%;aspect-ratio:16/9;border:0" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  // Instagram
+  const ig=url.match(/instagram\.com\/(p|reel|tv)\/([a-zA-Z0-9_-]+)/);
+  if(ig){
+    if(compact)return link('Ver no Instagram',true);
+    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px;max-width:340px"><iframe src="https://www.instagram.com/${ig[1]}/${ig[2]}/embed/" style="width:100%;aspect-ratio:9/16;border:0" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  // TikTok
+  const tt=url.match(/tiktok\.com\/@[^/?]+\/video\/(\d+)/);
+  if(tt){
+    if(compact)return link('Ver no TikTok',true);
+    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px;max-width:340px"><iframe src="https://www.tiktok.com/embed/v2/${tt[1]}" style="width:100%;aspect-ratio:9/16;border:0" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  // Facebook
+  if(/facebook\.com\/.+\/(video|reel|videos)/.test(url)){
+    if(compact)return link('Ver no Facebook',true);
+    const fb=`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px"><iframe src="${fb}" style="width:100%;aspect-ratio:16/9;border:0" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  // Fallback
+  return link(null,compact);
+}
 function groupColor(g){
   const m={'Peito':'#3b82f6','Costas':'#22c55e','Ombros':'#a855f7','Bíceps':'#f97316',
     'Tríceps':'#ef4444','Antebraços':'#f43f5e','Abdominais':'#eab308','Quadríceps':'#14b8a6',
@@ -595,7 +633,7 @@ function viewEx(id){
   document.getElementById('ex-d-photo').innerHTML=e.photo?`<img src="${e.photo}" style="width:100%;border-radius:12px;margin-bottom:16px;max-height:280px;object-fit:cover">`:'';
   let html='';
   if(e.description)html+=`<div class="sv-box"><div class="sv-box-title">📝 Descrição / Técnica</div><div class="sv-box-content">${autoLink(e.description)}</div></div>`;
-  if(e.video)html+=`<div class="sv-box"><div class="sv-box-title">🎬 Vídeo</div><a href="${e.video}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.9rem;font-weight:500">▶ Ver vídeo</a></div>`;
+  if(e.video)html+=`<div class="sv-box"><div class="sv-box-title">🎬 Vídeo</div>${getVideoEmbed(e.video)}</div>`;
   if(e.notes)html+=`<div class="sv-box" style="opacity:.72"><div class="sv-box-title">💬 Notas</div><div class="sv-box-content">${autoLink(e.notes)}</div></div>`;
   document.getElementById('ex-d-content').innerHTML=html;
 }
@@ -726,7 +764,7 @@ function renderTrDetail(){
           ${x.rest?`<div class="ex-stat"><div class="ex-stat-val">${x.rest}</div><div class="ex-stat-lbl">Descanso</div></div>`:''}
         </div>
         ${x.notes?`<div class="ex-notes">💬 ${x.notes}</div>`:''}
-        ${lib?.video?`<div style="margin-top:8px"><a href="${lib.video}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.82rem;font-weight:500">▶ Ver vídeo</a></div>`:''}
+        ${lib?.video?`<div style="margin-top:8px">${getVideoEmbed(lib.video,true)}</div>`:''}
       </div>`;
     });
   }
