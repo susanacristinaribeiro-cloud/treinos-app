@@ -157,6 +157,12 @@ class DriveStorage:
             self._memory = data
             return False
 
+    def get_drive_session(self):
+        """Sessão autenticada para chamadas directas à Drive API."""
+        if not self._use_drive:
+            raise RuntimeError("Google Drive não disponível")
+        return self._session()
+
     @property
     def is_using_drive(self) -> bool:
         return self._use_drive

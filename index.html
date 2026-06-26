@@ -530,12 +530,15 @@ function getVideoEmbed(url,compact){
     if(compact)return link();
     return`<div style="border-radius:10px;overflow:hidden;margin-top:8px"><iframe src="https://www.youtube.com/embed/${yt[1]}" style="width:100%;aspect-ratio:16/9;border:0" allowfullscreen loading="lazy"></iframe></div>`;
   }
-  // Google Drive
+  // Google Drive — proxy pelo backend para não precisar de acesso público
   const gd=url.match(/drive\.google\.com\/(?:file\/d\/([a-zA-Z0-9_-]+)|open\?id=([a-zA-Z0-9_-]+))/);
   if(gd){
     const id=gd[1]||gd[2];
-    if(compact)return link();
-    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px"><iframe src="https://drive.google.com/file/d/${id}/preview" style="width:100%;aspect-ratio:16/9;border:0" allowfullscreen loading="lazy"></iframe></div>`;
+    const api=getApiUrl();
+    if(compact||!api)return link();
+    const key=getApiKey();
+    const src=`${api}/videos/${id}${key?'?api_key='+encodeURIComponent(key):''}`;
+    return`<div style="border-radius:10px;overflow:hidden;margin-top:8px"><video controls style="width:100%;border-radius:10px;background:#000;display:block" src="${src}">O teu browser não suporta vídeo HTML5.</video></div>`;
   }
   // Instagram
   const ig=url.match(/instagram\.com\/(p|reel|tv)\/([a-zA-Z0-9_-]+)/);

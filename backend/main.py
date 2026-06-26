@@ -1,10 +1,12 @@
 import os
+import re
 import logging
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException, Depends, Security, status
+from fastapi import FastAPI, HTTPException, Depends, Security, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.security.api_key import APIKeyHeader
 
 from models import (
@@ -35,6 +37,18 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 async def verify_api_key(key: Optional[str] = Security(api_key_header)):
     if not API_KEY:
         return
+    if key != API_KEY:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API Key inválida.")
+
+
+async def verify_api_key_or_param(
+    request: Request,
+    header_key: Optional[str] = Security(api_key_header),
+):
+    """Aceita API key via header ou query param (necessário para src de <video>)."""
+    if not API_KEY:
+        return
+    key = header_key or request.query_params.get("api_key", "")
     if key != API_KEY:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API Key inválida.")
 
@@ -190,3 +204,89 @@ def delete_nota(nota_id: str, deps=Depends(verify_api_key)):
     if len(data.notas) == original:
         raise HTTPException(status_code=404, detail="Nota não encontrada.")
     storage.save(data)
+
+
+# ── Vídeos (proxy Google Drive) ───────────────────────────────────────────────
+
+@app.get("/videos/{file_id}", tags=["Vídeos"])
+async def stream_video(file_id: str, request: Request, deps=Depends(verify_api_key_or_param)):
+    """Faz proxy de um ficheiro de vídeo do Google Drive com suporte a Range requests."""
+    if not storage.is_using_drive:
+        raise HTTPException(status_code=503, detail="Google Drive não disponível.")
+
+    try:
+        session = storage.get_drive_session()
+
+        # Metadados: tipo MIME e tamanho
+        meta = session.get(
+            f"https://www.googleapis.com/drive/v3/files/{file_id}",
+            params={"fields": "mimeType,size", "supportsAllDrives": "true"},
+            timeout=10,
+        )
+        if meta.status_code == 404:
+            raise HTTPException(status_code=404, detail="Ficheiro não encontrado no Drive.")
+        meta.raise_for_status()
+        meta_json = meta.json()
+        content_type = meta_json.get("mimeType", "video/mp4")
+        file_size = int(meta_json.get("size", 0))
+
+        range_header = request.headers.get("Range")
+        drive_params = {"alt": "media", "supportsAllDrives": "true"}
+        drive_headers = {}
+
+        if range_header and file_size:
+            m = re.match(r"bytes=(\d+)-(\d*)", range_header)
+            if m:
+                start = int(m.group(1))
+                end = int(m.group(2)) if m.group(2) else file_size - 1
+                end = min(end, file_size - 1)
+                drive_headers["Range"] = f"bytes={start}-{end}"
+
+                resp = session.get(
+                    f"https://www.googleapis.com/drive/v3/files/{file_id}",
+                    params=drive_params,
+                    headers=drive_headers,
+                    stream=True,
+                    timeout=60,
+                )
+                resp.raise_for_status()
+
+                def _iter():
+                    for chunk in resp.iter_content(chunk_size=65536):
+                        yield chunk
+
+                return StreamingResponse(
+                    _iter(),
+                    status_code=206,
+                    headers={
+                        "Content-Range": f"bytes {start}-{end}/{file_size}",
+                        "Accept-Ranges": "bytes",
+                        "Content-Length": str(end - start + 1),
+                        "Content-Type": content_type,
+                    },
+                )
+
+        # Pedido completo
+        resp = session.get(
+            f"https://www.googleapis.com/drive/v3/files/{file_id}",
+            params=drive_params,
+            stream=True,
+            timeout=60,
+        )
+        resp.raise_for_status()
+
+        headers = {"Accept-Ranges": "bytes", "Content-Type": content_type}
+        if file_size:
+            headers["Content-Length"] = str(file_size)
+
+        def _iter():
+            for chunk in resp.iter_content(chunk_size=65536):
+                yield chunk
+
+        return StreamingResponse(_iter(), headers=headers)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao fazer stream do vídeo {file_id}: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao aceder ao vídeo.")
