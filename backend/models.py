@@ -3,7 +3,7 @@ Modelos Pydantic para a app de treinos.
 """
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -11,37 +11,49 @@ def _now(): return datetime.utcnow().isoformat()
 def _uid():  return str(uuid.uuid4())
 
 
+# ── Media (imagens e vídeos) ─────────────────────────────────────────────────
+
+class VideoRef(BaseModel):
+    id:     str                        = Field(default_factory=_uid)
+    origem: Literal["upload", "url"]
+    path:   Optional[str] = None   # usado quando origem == "upload"
+    url:    Optional[str] = None   # usado quando origem == "url"
+
+
 # ── Exercício (biblioteca) ────────────────────────────────────────────────────
 
 class Exercicio(BaseModel):
-    id:          str           = Field(default_factory=_uid)
-    name:        str
-    group:       Optional[str] = None
-    emoji:       Optional[str] = "💪"
-    description: Optional[str] = None
-    video:       Optional[str] = None
-    notes:       Optional[str] = None
-    photo:       Optional[str] = None
-    created_at:  Optional[str] = Field(default_factory=_now)
-    updated_at:  Optional[str] = Field(default_factory=_now)
+    id:               str               = Field(default_factory=_uid)
+    name:             str
+    group:            Optional[str]     = None
+    emoji:            Optional[str]     = "💪"
+    description:      Optional[str]     = None
+    photos:           List[str]         = []          # antes: photo (str único)
+    videos:           List[VideoRef]    = []          # antes: video (str único)
+    notes:            Optional[str]     = None
+    alternative_ids:  List[str]         = []          # ids de outros Exercicio (biblioteca)
+    created_at:       Optional[str]     = Field(default_factory=_now)
+    updated_at:       Optional[str]     = Field(default_factory=_now)
 
 class ExercicioCreate(BaseModel):
-    name:        str
-    group:       Optional[str] = None
-    emoji:       Optional[str] = "💪"
-    description: Optional[str] = None
-    video:       Optional[str] = None
-    notes:       Optional[str] = None
-    photo:       Optional[str] = None
+    name:            str
+    group:           Optional[str]     = None
+    emoji:           Optional[str]     = "💪"
+    description:     Optional[str]     = None
+    photos:          List[str]         = []
+    videos:          List[VideoRef]    = []
+    notes:           Optional[str]     = None
+    alternative_ids: List[str]         = []
 
 class ExercicioUpdate(BaseModel):
-    name:        Optional[str] = None
-    group:       Optional[str] = None
-    emoji:       Optional[str] = None
-    description: Optional[str] = None
-    video:       Optional[str] = None
-    notes:       Optional[str] = None
-    photo:       Optional[str] = None
+    name:            Optional[str]           = None
+    group:           Optional[str]           = None
+    emoji:           Optional[str]           = None
+    description:     Optional[str]           = None
+    photos:          Optional[List[str]]     = None
+    videos:          Optional[List[VideoRef]] = None
+    notes:           Optional[str]           = None
+    alternative_ids: Optional[List[str]]     = None
 
 
 # ── Exercício dentro de um Treino ────────────────────────────────────────────
