@@ -622,7 +622,12 @@ function viewEx(id){
   const altIds=e.alternative_ids||[];
   if(altIds.length){
     const alts=altIds.map(id=>exercicios.find(x=>x.id===id)).filter(Boolean);
-    if(alts.length)html+=`<div class="sv-box"><div class="sv-box-title">🔄 Alternativas</div>${alts.map(a=>`<div style="margin-bottom:4px"><a href="javascript:viewEx('${a.id}')" style="color:var(--accent);font-size:.9rem;font-weight:500">${a.emoji||'💪'} ${a.name}</a></div>`).join('')}</div>`;
+    if(alts.length)html+=`<div class="sv-box"><div class="sv-box-title">🔄 Alternativas</div><div class="item-list" style="margin-top:4px">${alts.map(a=>`<div class="list-row" onclick="viewEx('${a.id}')" style="cursor:pointer">
+      ${a.photos&&a.photos[0]?`<img class="list-row-thumb" src="${a.photos[0]}" loading="lazy"/>`
+               :`<div class="list-row-placeholder" style="background:${groupColor(a.group)}22">${a.emoji||'💪'}</div>`}
+      <div class="list-row-body"><div class="row-name">${a.name}</div>${a.group?`<div class="row-sub">${a.group}</div>`:''}</div>
+      <span class="list-row-arrow">›</span>
+    </div>`).join('')}</div></div>`;
   }
   document.getElementById('ex-d-content').innerHTML=html;
 }
