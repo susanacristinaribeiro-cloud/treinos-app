@@ -114,6 +114,18 @@ textarea.fc{resize:vertical;min-height:80px}
 .photo-up{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.85rem}
 .photo-up:hover{border-color:var(--accent);color:var(--accent)}
 .photo-prev{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:8px}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.photo-grid-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden}
+.photo-grid-item img{width:100%;height:100%;object-fit:cover}
+.photo-grid-rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:.7rem;cursor:pointer;line-height:1}
+.photo-add-btn{aspect-ratio:1;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:1.4rem}
+.video-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.video-row select{flex:0 0 auto;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:.82rem}
+.video-row input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.85rem}
+.video-row button.rm{flex:0 0 auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px}
+.alt-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.alt-tag{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:4px 10px;font-size:.8rem;display:flex;align-items:center;gap:6px}
+.alt-tag button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;line-height:1}
 .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
 .confirm-overlay.open{display:flex}
 .confirm-box{background:#fff;border-radius:12px;padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
@@ -270,15 +282,23 @@ textarea.fc{resize:vertical;min-height:80px}
         <div class="fg"><label class="fl">Emoji</label><input class="fc" id="exEmoji" placeholder="💪" maxlength="4"></div>
       </div>
       <div class="fg"><label class="fl">Descrição / Técnica</label><textarea class="fc" id="exDesc" placeholder="Como executar correctamente..."></textarea></div>
-      <div class="fg"><label class="fl">Link de Vídeo</label><input class="fc" id="exVideo" placeholder="https://youtube.com/..."></div>
       <div class="fg"><label class="fl">Notas adicionais</label><textarea class="fc" id="exNotes" placeholder="Dicas, variações, carga..." style="min-height:60px"></textarea></div>
       <div class="fg">
-        <label class="fl">Foto</label>
-        <div class="photo-up" onclick="document.getElementById('exPhotoInput').click()">
-          <img id="exPhotoPrev" class="photo-prev" style="display:none">
-          <div id="exPhotoTxt">📷 Clica para adicionar foto</div>
-        </div>
-        <input type="file" id="exPhotoInput" accept="image/*" style="display:none" onchange="handleExPhoto(event)">
+        <label class="fl">Fotos</label>
+        <div class="photo-grid" id="exPhotoGrid"></div>
+        <div class="photo-add-btn" onclick="document.getElementById('exPhotoInput').click()">＋</div>
+        <input type="file" id="exPhotoInput" accept="image/*" multiple style="display:none" onchange="handleExPhoto(event)">
+      </div>
+      <div class="fg">
+        <label class="fl">Vídeos</label>
+        <div id="exVideoList"></div>
+        <button type="button" class="btn btn-s btn-sm" onclick="addExVideoRow()">＋ Adicionar vídeo</button>
+      </div>
+      <div class="fg">
+        <label class="fl">Exercícios Alternativos</label>
+        <input class="fc" id="exAltSearch" placeholder="🔍 Pesquisar exercício..." oninput="renderAltOptions()" onfocus="renderAltOptions()">
+        <div id="exAltOptions" class="pills" style="margin-top:6px"></div>
+        <div class="alt-tags" id="exAltTags"></div>
       </div>
     </div>
     <div class="modal-ftr">
@@ -424,7 +444,7 @@ let exercicios=[],treinos=[],notas=[];
 let currentTab='exercicios';
 let currentEx=null,currentTr=null,currentNota=null;
 let editingEx=null,editingTr=null,editingTrEx=null,editingNota=null;
-let exPhoto=null,exFilterGrp='';
+let exPhotos=[],exVideos=[],exAlternativeIds=[],exFilterGrp='';
 
 const GROUPS=['Peito','Costas','Ombros','Bíceps','Tríceps','Antebraços',
   'Abdominais','Quadríceps','Posterior','Glúteos','Gémeos','Full Body','Cardio','Outro'];
@@ -463,7 +483,7 @@ function setSaving(btnId, saving){
 // ══════════════════════════════════════════════
 function saveLocal(){
   try{
-    localStorage.setItem('gym_ex',JSON.stringify(exercicios.map(x=>({...x,photo:null}))));
+    localStorage.setItem('gym_ex',JSON.stringify(exercicios.map(x=>({...x,photos:[]}))));
     localStorage.setItem('gym_tr',JSON.stringify(treinos));
     localStorage.setItem('gym_no',JSON.stringify(notas));
   }catch{
@@ -574,7 +594,7 @@ function renderExercicios(){
   const grid=document.getElementById('exGrid');
   if(!f.length){grid.innerHTML=`<div class="empty"><div class="empty-icon">🏋️</div><div class="empty-title">Sem exercícios</div><div class="empty-text">Clica ＋ para adicionar o primeiro</div></div>`;return;}
   grid.innerHTML=`<div class="item-list">${f.map(e=>`<div class="list-row" onclick="viewEx('${e.id}')">
-    ${e.photo?`<img class="list-row-thumb" src="${e.photo}" loading="lazy"/>`
+    ${e.photos&&e.photos[0]?`<img class="list-row-thumb" src="${e.photos[0]}" loading="lazy"/>`
              :`<div class="list-row-placeholder" style="background:${groupColor(e.group)}22">${e.emoji||'💪'}</div>`}
     <div class="list-row-body">
       <div class="row-name">${e.name}</div>
@@ -592,11 +612,18 @@ function viewEx(id){
   document.getElementById('ex-detail').classList.add('active');
   document.getElementById('ex-d-name').textContent=(e.emoji||'💪')+' '+e.name;
   document.getElementById('ex-d-group').textContent=e.group||'';
-  document.getElementById('ex-d-photo').innerHTML=e.photo?`<img src="${e.photo}" style="width:100%;border-radius:12px;margin-bottom:16px;max-height:280px;object-fit:cover">`:'';
+  const photos=e.photos||[];
+  document.getElementById('ex-d-photo').innerHTML=photos.length?`<div class="photo-grid" style="grid-template-columns:repeat(${Math.min(photos.length,3)},1fr);margin-bottom:16px">${photos.map(p=>`<div class="photo-grid-item"><img src="${p}"></div>`).join('')}</div>`:'';
   let html='';
   if(e.description)html+=`<div class="sv-box"><div class="sv-box-title">📝 Descrição / Técnica</div><div class="sv-box-content">${autoLink(e.description)}</div></div>`;
-  if(e.video)html+=`<div class="sv-box"><div class="sv-box-title">🎬 Vídeo</div><a href="${e.video}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.9rem;font-weight:500">▶ Ver vídeo</a></div>`;
+  const videos=e.videos||[];
+  if(videos.length)html+=`<div class="sv-box"><div class="sv-box-title">🎬 Vídeo${videos.length>1?'s':''}</div>${videos.map(v=>`<div><a href="${v.url||v.path}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.9rem;font-weight:500">▶ Ver vídeo</a></div>`).join('')}</div>`;
   if(e.notes)html+=`<div class="sv-box" style="opacity:.72"><div class="sv-box-title">💬 Notas</div><div class="sv-box-content">${autoLink(e.notes)}</div></div>`;
+  const altIds=e.alternative_ids||[];
+  if(altIds.length){
+    const alts=altIds.map(id=>exercicios.find(x=>x.id===id)).filter(Boolean);
+    if(alts.length)html+=`<div class="sv-box"><div class="sv-box-title">🔄 Alternativas</div>${alts.map(a=>`<div style="margin-bottom:4px"><a href="javascript:viewEx('${a.id}')" style="color:var(--accent);font-size:.9rem;font-weight:500">${a.emoji||'💪'} ${a.name}</a></div>`).join('')}</div>`;
+  }
   document.getElementById('ex-d-content').innerHTML=html;
 }
 function backToExList(silent){document.getElementById('ex-list').style.display='';document.getElementById('ex-detail').classList.remove('active');if(!silent)currentEx=null;}
@@ -605,33 +632,84 @@ function backToExList(silent){document.getElementById('ex-list').style.display='
 // EXERCÍCIOS — CRUD
 // ══════════════════════════════════════════════
 function openExModal(ex){
-  editingEx=ex||null;exPhoto=ex?.photo||null;
+  editingEx=ex||null;
+  exPhotos=[...(ex?.photos||[])];
+  exVideos=(ex?.videos||[]).map(v=>({...v}));
+  exAlternativeIds=[...(ex?.alternative_ids||[])];
   document.getElementById('exModalTitle').textContent=ex?'Editar Exercício':'Novo Exercício';
   document.getElementById('exName').value=ex?.name||'';
   document.getElementById('exGroup').value=ex?.group||'';
   document.getElementById('exEmoji').value=ex?.emoji||'💪';
   document.getElementById('exDesc').value=ex?.description||'';
-  document.getElementById('exVideo').value=ex?.video||'';
   document.getElementById('exNotes').value=ex?.notes||'';
-  const prev=document.getElementById('exPhotoPrev'),txt=document.getElementById('exPhotoTxt');
-  if(ex?.photo){prev.src=ex.photo;prev.style.display='block';txt.style.display='none';}
-  else{prev.style.display='none';txt.style.display='block';}
+  document.getElementById('exAltSearch').value='';
+  document.getElementById('exAltOptions').innerHTML='';
+  renderExPhotoGrid();renderExVideoList();renderAltTags();
   document.getElementById('exDelBtn').style.display=ex?'inline-flex':'none';
   document.getElementById('exModal').classList.add('open');
 }
 function closeExModal(){document.getElementById('exModal').classList.remove('open');editingEx=null;}
+
+function renderExPhotoGrid(){
+  document.getElementById('exPhotoGrid').innerHTML=exPhotos.map((p,i)=>
+    `<div class="photo-grid-item"><img src="${p}"><button class="photo-grid-rm" onclick="removeExPhoto(${i})">✕</button></div>`).join('');
+}
+function removeExPhoto(i){exPhotos.splice(i,1);renderExPhotoGrid();}
 function handleExPhoto(e){
+  const files=[...e.target.files];if(!files.length)return;
+  files.forEach(file=>{
+    const r=new FileReader();
+    r.onload=ev=>{exPhotos.push(ev.target.result);renderExPhotoGrid();};
+    r.readAsDataURL(file);
+  });
+  e.target.value='';
+}
+
+function renderExVideoList(){
+  document.getElementById('exVideoList').innerHTML=exVideos.map((v,i)=>`
+    <div class="video-row">
+      <select onchange="setExVideoOrigem(${i},this.value)">
+        <option value="url"${v.origem==='url'?' selected':''}>URL</option>
+        <option value="upload"${v.origem==='upload'?' selected':''}>Ficheiro</option>
+      </select>
+      ${v.origem==='upload'
+        ?`<input type="file" accept="video/*" onchange="handleExVideoFile(${i},event)">`
+        :`<input type="text" placeholder="https://..." value="${v.url||''}" oninput="setExVideoUrl(${i},this.value)">`}
+      <button type="button" class="rm" onclick="removeExVideo(${i})">✕</button>
+    </div>`).join('');
+}
+function addExVideoRow(){exVideos.push({origem:'url',url:''});renderExVideoList();}
+function removeExVideo(i){exVideos.splice(i,1);renderExVideoList();}
+function setExVideoOrigem(i,val){exVideos[i]={origem:val};renderExVideoList();}
+function setExVideoUrl(i,val){exVideos[i].url=val;}
+function handleExVideoFile(i,e){
   const file=e.target.files[0];if(!file)return;
   const r=new FileReader();
-  r.onload=ev=>{exPhoto=ev.target.result;document.getElementById('exPhotoPrev').src=exPhoto;document.getElementById('exPhotoPrev').style.display='block';document.getElementById('exPhotoTxt').style.display='none';};
+  r.onload=ev=>{exVideos[i].path=ev.target.result;};
   r.readAsDataURL(file);
+}
+
+function renderAltOptions(){
+  const q=(document.getElementById('exAltSearch').value||'').toLowerCase();
+  const opts=exercicios.filter(x=>x.id!==editingEx?.id&&!exAlternativeIds.includes(x.id)
+    &&(!q||x.name.toLowerCase().includes(q))).slice(0,8);
+  document.getElementById('exAltOptions').innerHTML=opts.map(x=>
+    `<button class="pill-btn" onclick="addExAlternative('${x.id}')">${x.emoji||'💪'} ${x.name}</button>`).join('');
+}
+function addExAlternative(id){exAlternativeIds.push(id);document.getElementById('exAltSearch').value='';renderAltOptions();renderAltTags();}
+function removeExAlternative(id){exAlternativeIds=exAlternativeIds.filter(x=>x!==id);renderAltTags();}
+function renderAltTags(){
+  document.getElementById('exAltTags').innerHTML=exAlternativeIds.map(id=>{
+    const x=exercicios.find(a=>a.id===id);if(!x)return'';
+    return`<div class="alt-tag">${x.emoji||'💪'} ${x.name}<button onclick="removeExAlternative('${id}')">✕</button></div>`;
+  }).join('');
 }
 
 async function saveEx(){
   const name=document.getElementById('exName').value.trim();if(!name){alert('Nome obrigatório');return;}
   const body={name,group:document.getElementById('exGroup').value.trim(),emoji:document.getElementById('exEmoji').value.trim()||'💪',
-    description:document.getElementById('exDesc').value.trim(),video:document.getElementById('exVideo').value.trim(),
-    notes:document.getElementById('exNotes').value.trim(),photo:exPhoto};
+    description:document.getElementById('exDesc').value.trim(),videos:exVideos.filter(v=>v.url||v.path),
+    notes:document.getElementById('exNotes').value.trim(),photos:exPhotos,alternative_ids:exAlternativeIds};
   setSaving('exSaveBtn',true);
   try{
     let result;
@@ -726,7 +804,7 @@ function renderTrDetail(){
           ${x.rest?`<div class="ex-stat"><div class="ex-stat-val">${x.rest}</div><div class="ex-stat-lbl">Descanso</div></div>`:''}
         </div>
         ${x.notes?`<div class="ex-notes">💬 ${x.notes}</div>`:''}
-        ${lib?.video?`<div style="margin-top:8px"><a href="${lib.video}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.82rem;font-weight:500">▶ Ver vídeo</a></div>`:''}
+        ${lib?.videos&&lib.videos[0]?`<div style="margin-top:8px"><a href="${lib.videos[0].url||lib.videos[0].path}" target="_blank" rel="noopener" style="color:var(--accent);font-size:.82rem;font-weight:500">▶ Ver vídeo</a></div>`:''}
       </div>`;
     });
   }
